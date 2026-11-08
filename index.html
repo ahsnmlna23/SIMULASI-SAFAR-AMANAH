@@ -1,0 +1,808 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Simulasi pembiayaan umrah syariah Safar Amanah: DP, cicilan, dan jadwal keberangkatan.">
+<meta name="theme-color" content="#0D5634">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Simulasi Safar">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<title>Simulasi Pembiayaan Safar Amanah</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: pita header → rel program → ruang negosiasi | kartu penawaran + jadwal → cocokkan kemampuan klien */
+:root{
+  --bg:#F1F5F1; --surface:#FFFFFF; --surface-2:#E8EFE9; --ink:#10241A; --muted:#566A5E; --line:#D3DDD5;
+  --brand:#0D5634; --brand-fg:#0D5634; --brand-soft:#DCEDE2; --on-brand:#FFFFFF;
+  --accent:#D9730A; --accent-soft:#FCEBD6; --gold:#E9AC00;
+  --ok:#1C7A45; --ok-soft:#DDF1E4; --warn:#9A5A00; --warn-soft:#FBEBD0; --bad:#B42318; --bad-soft:#FBE1DE;
+  --t-bg:#0D5634; --t-bg2:#094227; --t-ink:#FFFFFF; --t-muted:#B6D4C1; --t-gold:#FFC93C; --t-line:rgba(255,255,255,.3);
+  --chart-a:#0D5634; --chart-b:#D9730A; --grid:#E1E8E2;
+  --font:'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --r:14px;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0A1410; --surface:#111E18; --surface-2:#18291F; --ink:#E6EFE8; --muted:#9AB0A2; --line:#25392D;
+  --brand:#16774D; --brand-fg:#66D09A; --brand-soft:#143826; --on-brand:#FFFFFF;
+  --accent:#F59A2E; --accent-soft:#3A2810; --gold:#F5C23A;
+  --ok:#62D395; --ok-soft:#12331F; --warn:#F2B04F; --warn-soft:#382711; --bad:#F4877B; --bad-soft:#3B1714;
+  --t-bg:#0F4A2E; --t-bg2:#0A3922; --t-ink:#FFFFFF; --t-muted:#A9CDB7; --t-gold:#FFC93C; --t-line:rgba(255,255,255,.26);
+  --chart-a:#66D09A; --chart-b:#F59A2E; --grid:#1F3127; color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#0A1410; --surface:#111E18; --surface-2:#18291F; --ink:#E6EFE8; --muted:#9AB0A2; --line:#25392D;
+  --brand:#16774D; --brand-fg:#66D09A; --brand-soft:#143826; --on-brand:#FFFFFF;
+  --accent:#F59A2E; --accent-soft:#3A2810; --gold:#F5C23A;
+  --ok:#62D395; --ok-soft:#12331F; --warn:#F2B04F; --warn-soft:#382711; --bad:#F4877B; --bad-soft:#3B1714;
+  --t-bg:#0F4A2E; --t-bg2:#0A3922; --t-ink:#FFFFFF; --t-muted:#A9CDB7; --t-gold:#FFC93C; --t-line:rgba(255,255,255,.26);
+  --chart-a:#66D09A; --chart-b:#F59A2E; --grid:#1F3127; color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none !important}
+body{background:var(--bg); color:var(--ink); font-family:var(--font); font-size:15px; line-height:1.5; -webkit-font-smoothing:antialiased}
+.wrap{max-width:1240px; margin:0 auto; padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px))}
+.num,.tab{font-variant-numeric:tabular-nums}
+h1,h2,h3{text-wrap:balance; margin:0}
+button,input,select{font:inherit; color:inherit}
+:focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:6px}
+
+/* Header */
+.top{background:var(--t-bg); color:var(--t-ink)}
+.top .wrap{display:flex; align-items:center; justify-content:space-between; gap:16px; padding-block:14px; flex-wrap:wrap}
+.brand{display:flex; align-items:center; gap:12px; min-width:0}
+.wordmark{display:flex; flex-direction:column; line-height:1}
+.wordmark b{font-size:19px; font-weight:700; letter-spacing:-.01em}
+.wordmark span{font-size:9.5px; letter-spacing:.42em; color:var(--t-gold); margin-top:4px; font-weight:600}
+.brand .sep{width:1px; height:30px; background:var(--t-line)}
+.brand .app-name{font-size:14px; color:var(--t-muted); font-weight:500}
+.brand .app-name strong{display:block; color:var(--t-ink); font-size:15px; font-weight:700}
+.mode{display:flex; align-items:center; gap:10px; background:none; border:1px solid var(--t-line); color:var(--t-ink); border-radius:999px; padding:6px 8px 6px 14px; cursor:pointer; font-size:13px; font-weight:600}
+.mode .sw{width:36px; height:20px; border-radius:99px; background:rgba(255,255,255,.18); position:relative; transition:background .2s}
+.mode .sw::after{content:""; position:absolute; top:3px; left:3px; width:14px; height:14px; border-radius:50%; background:var(--t-ink); transition:transform .2s}
+.mode[aria-pressed="true"] .sw{background:var(--t-gold)}
+.mode[aria-pressed="true"] .sw::after{transform:translateX(16px); background:var(--t-bg)}
+
+.fence{background:var(--t-bg2); color:var(--t-muted); font-size:12.5px}
+.fence .wrap{display:flex; gap:8px 20px; flex-wrap:wrap; padding-block:8px; align-items:center}
+.fence b{color:var(--t-ink); font-weight:600}
+.fence .lock{display:inline-flex; align-items:center; gap:6px}
+.fence svg{flex:none}
+
+/* Program rail */
+.rail{display:grid; grid-template-columns:repeat(5, minmax(0,1fr)); gap:10px; margin-block:20px 18px}
+.prog{text-align:left; background:var(--surface); border:1px solid var(--line); border-radius:var(--r); padding:12px 14px; cursor:pointer; display:flex; flex-direction:column; gap:6px; transition:border-color .15s, box-shadow .15s}
+.prog:hover{border-color:var(--brand-fg)}
+.prog[aria-pressed="true"]{border-color:var(--brand); box-shadow:inset 0 0 0 1px var(--brand); background:var(--brand-soft)}
+.prog .pn{font-weight:700; font-size:14.5px; line-height:1.25}
+.prog .pd{font-size:12.5px; color:var(--muted)}
+.chip{display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; padding:3px 8px; border-radius:99px; width:max-content; max-width:100%}
+.chip.ok{background:var(--ok-soft); color:var(--ok)}
+.chip.warn{background:var(--warn-soft); color:var(--warn)}
+.chip.bad{background:var(--bad-soft); color:var(--bad)}
+.chip.mute{background:var(--surface-2); color:var(--muted)}
+
+/* Workbench */
+.bench{display:grid; grid-template-columns:minmax(0, 400px) minmax(0,1fr); gap:20px; align-items:start}
+.panel{background:var(--surface); border:1px solid var(--line); border-radius:var(--r); padding:20px}
+.panel h2{font-size:16px; font-weight:700; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap}
+.panel .sub{color:var(--muted); font-size:13px; margin-top:2px}
+.eyebrow{font-size:11.5px; letter-spacing:.08em; text-transform:uppercase; font-weight:700; color:var(--muted)}
+.stack{display:flex; flex-direction:column; gap:18px}
+.field{display:flex; flex-direction:column; gap:8px}
+.field > label, .lbl{font-size:13px; font-weight:600; display:flex; justify-content:space-between; align-items:baseline; gap:8px}
+.field .hint{font-size:12px; color:var(--muted); font-weight:500}
+.row2{display:grid; grid-template-columns:minmax(0,1fr) 128px; gap:10px}
+.money{display:flex; align-items:center; border:1px solid var(--line); border-radius:10px; background:var(--surface); overflow:hidden}
+.money:focus-within{border-color:var(--brand-fg); box-shadow:0 0 0 3px var(--brand-soft)}
+.money span{padding:0 0 0 12px; color:var(--muted); font-weight:600; font-size:14px}
+.money input{border:0; outline:0; background:transparent; padding:10px 12px 10px 6px; width:100%; min-width:0; font-weight:600; font-variant-numeric:tabular-nums}
+.stepper{display:flex; border:1px solid var(--line); border-radius:10px; overflow:hidden; background:var(--surface)}
+.stepper button{border:0; background:var(--surface-2); width:36px; cursor:pointer; font-weight:700; font-size:16px}
+.stepper input{border:0; outline:0; width:100%; min-width:0; text-align:center; background:transparent; font-weight:600}
+select, input[type="month"]{border:1px solid var(--line); border-radius:10px; padding:9px 10px; background:var(--surface); width:100%}
+.big-val{font-size:22px; font-weight:800; letter-spacing:-.01em; color:var(--brand-fg)}
+.big-val small{font-size:13px; color:var(--muted); font-weight:600; margin-left:6px}
+
+/* Range */
+.range{position:relative; padding-top:2px}
+input[type="range"]{-webkit-appearance:none; appearance:none; width:100%; height:24px; background:transparent; margin:0; cursor:pointer; --p:50%}
+input[type="range"]::-webkit-slider-runnable-track{height:6px; border-radius:99px; background:linear-gradient(to right, var(--brand-fg) var(--p), var(--surface-2) var(--p))}
+input[type="range"]::-moz-range-track{height:6px; border-radius:99px; background:linear-gradient(to right, var(--brand-fg) var(--p), var(--surface-2) var(--p))}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none; width:20px; height:20px; border-radius:50%; background:var(--surface); border:3px solid var(--brand-fg); margin-top:-7px; box-shadow:0 1px 3px rgba(0,0,0,.25)}
+input[type="range"]::-moz-range-thumb{width:14px; height:14px; border-radius:50%; background:var(--surface); border:3px solid var(--brand-fg)}
+.tick{position:absolute; top:-2px; width:2px; height:30px; background:var(--accent); transform:translateX(-1px); pointer-events:none; border-radius:2px}
+.scale{display:flex; justify-content:space-between; font-size:11.5px; color:var(--muted); position:relative; min-height:18px}
+.scale .mk{position:absolute; transform:translateX(-50%); color:var(--accent); font-weight:700; white-space:nowrap}
+.seg{display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:6px}
+#mSeg{grid-template-columns:repeat(7, minmax(0,1fr)); gap:4px}
+.seg button{border:1px solid var(--line); background:var(--surface); border-radius:9px; padding:8px 0; min-width:0; cursor:pointer; font-weight:600; font-size:13.5px; position:relative; font-variant-numeric:tabular-nums; white-space:nowrap}
+#mSeg button{font-size:12.5px; letter-spacing:-.01em}
+.seg button[aria-pressed="true"]{background:var(--brand); border-color:var(--brand); color:var(--on-brand)}
+.seg button.kom::after{content:""; position:absolute; top:4px; right:4px; width:6px; height:6px; border-radius:50%; background:var(--accent)}
+.note{font-size:12.5px; color:var(--muted)}
+.note b{color:var(--ink)}
+.clampmsg{font-size:12.5px; color:var(--warn); background:var(--warn-soft); border-radius:8px; padding:6px 10px}
+.btn{border:1px solid var(--line); background:var(--surface); border-radius:10px; padding:9px 14px; cursor:pointer; font-weight:600; font-size:13.5px; display:inline-flex; align-items:center; gap:8px; justify-content:center}
+.btn:hover{border-color:var(--brand-fg)}
+.btn.primary{background:var(--brand); border-color:var(--brand); color:var(--on-brand)}
+.btn.small{padding:6px 10px; font-size:12.5px; border-radius:8px}
+.btn.ghost{border-color:transparent; background:transparent; color:var(--brand-fg); padding-inline:6px}
+.locks{display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:10px}
+.lock-item{border:1px dashed var(--line); border-radius:10px; padding:10px 12px; display:flex; flex-direction:column; gap:1px; background:var(--surface-2)}
+.lock-item .k{font-size:12px; color:var(--muted); font-weight:600; display:flex; align-items:center; gap:6px}
+.lock-item .v{font-weight:800; font-size:17px; font-variant-numeric:tabular-nums}
+.lock-item .s{font-size:12px; color:var(--muted)}
+.opts{display:flex; flex-direction:column; gap:8px; margin-top:12px}
+.opt-row{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.1fr) minmax(0,1fr) auto; gap:6px 14px; align-items:center; border:1px solid var(--line); border-radius:12px; padding:12px 14px; background:var(--surface); text-align:left; width:100%; cursor:pointer}
+.opt-row:hover{border-color:var(--brand-fg)}
+.opt-row[aria-pressed="true"]{border-color:var(--brand); box-shadow:inset 0 0 0 1px var(--brand); background:var(--brand-soft); cursor:default}
+.opt-row .k{font-size:11px; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:.05em}
+.opt-row .v{font-weight:700; font-variant-numeric:tabular-nums; overflow-wrap:anywhere}
+.opt-row .v.big{font-size:17px; color:var(--brand-fg)}
+.opt-row .act{justify-self:end}
+.fitcards{display:grid; grid-template-columns:repeat(auto-fit, minmax(230px, 1fr)); gap:12px; margin-top:12px}
+.fc{border:1px solid var(--line); border-radius:12px; padding:14px; display:flex; flex-direction:column; gap:8px; min-width:0}
+.fc.good{border-color:color-mix(in srgb, var(--ok) 50%, var(--line)); background:color-mix(in srgb, var(--ok-soft) 45%, var(--surface))}
+.fc .ttl{font-weight:700; line-height:1.3}
+.fc dl{display:grid; grid-template-columns:auto minmax(0,1fr); gap:3px 12px; margin:0; font-size:13.5px}
+.fc dt{color:var(--muted)}
+.fc dd{margin:0; text-align:right; font-weight:600; font-variant-numeric:tabular-nums}
+.fc .ft{display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:auto; flex-wrap:wrap}
+.dock{display:none}
+
+/* Results */
+.results{display:flex; flex-direction:column; gap:16px; min-width:0}
+.status{border-radius:var(--r); padding:14px 16px; display:grid; grid-template-columns:auto minmax(0,1fr); gap:4px 12px; border:1px solid}
+.status.ok{background:var(--ok-soft); border-color:color-mix(in srgb, var(--ok) 30%, transparent)}
+.status.warn{background:var(--warn-soft); border-color:color-mix(in srgb, var(--warn) 30%, transparent)}
+.status.bad{background:var(--bad-soft); border-color:color-mix(in srgb, var(--bad) 30%, transparent)}
+.status .ic{width:26px; height:26px; border-radius:50%; display:grid; place-items:center; color:var(--surface); font-weight:800; font-size:14px; grid-row:span 2}
+.status.ok .ic{background:var(--ok)} .status.warn .ic{background:var(--warn)} .status.bad .ic{background:var(--bad)}
+.status .st{font-weight:700}
+.status.ok .st{color:var(--ok)} .status.warn .st{color:var(--warn)} .status.bad .st{color:var(--bad)}
+.status ul{margin:4px 0 0; padding-left:18px; font-size:13.5px; display:flex; flex-direction:column; gap:2px}
+.status .foot{font-size:12.5px; color:var(--muted); margin-top:4px}
+
+.ticket{background:linear-gradient(160deg, var(--t-bg), var(--t-bg2)); color:var(--t-ink); border-radius:18px; position:relative; overflow:hidden}
+.ticket .star{position:absolute; right:-30px; top:-30px; width:170px; height:170px; opacity:.09; pointer-events:none}
+.tk-main{padding:20px 22px 18px; display:flex; flex-direction:column; gap:14px; position:relative}
+.tk-head{display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; align-items:flex-start}
+.tk-head .eyebrow{color:var(--t-gold)}
+.tk-head .pname{font-size:17px; font-weight:700; margin-top:2px}
+.tk-tag{font-size:11.5px; font-weight:600; border:1px solid var(--t-line); border-radius:99px; padding:4px 10px; color:var(--t-muted); white-space:nowrap}
+.hero-num{display:flex; flex-direction:column; gap:2px}
+.hero-num .lab{font-size:13px; color:var(--t-muted); font-weight:500}
+.hero-num .val{font-size:clamp(30px, 5vw, 42px); font-weight:800; letter-spacing:-.02em; line-height:1.1; color:var(--t-gold); font-variant-numeric:tabular-nums}
+.hero-num .val small{font-size:15px; font-weight:600; color:var(--t-ink); letter-spacing:0; margin-left:4px}
+.hero-num .then{font-size:14px; color:var(--t-ink); font-weight:600}
+.tk-trio{display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:12px}
+.tk-trio div{display:flex; flex-direction:column; gap:1px; min-width:0}
+.tk-trio .k{font-size:11.5px; color:var(--t-muted); text-transform:uppercase; letter-spacing:.06em; font-weight:600}
+.tk-trio .v{font-size:16px; font-weight:700; font-variant-numeric:tabular-nums; overflow-wrap:anywhere}
+.tk-trio .s{font-size:12px; color:var(--t-muted)}
+.perf{position:relative; height:0; border-top:2px dashed var(--t-line); margin:0 22px}
+.perf::before,.perf::after{content:""; position:absolute; top:-12px; width:22px; height:22px; border-radius:50%; background:var(--bg)}
+.perf::before{left:-34px} .perf::after{right:-34px}
+.tk-stub{padding:14px 22px 18px; display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:10px 14px}
+.tk-stub div{display:flex; flex-direction:column; min-width:0}
+.tk-stub .k{font-size:12px; color:var(--t-muted)}
+.tk-stub .v{font-weight:700; font-variant-numeric:tabular-nums; font-size:14.5px; overflow-wrap:anywhere}
+.tk-actions{display:flex; gap:8px; flex-wrap:wrap; padding:0 22px 18px}
+.tk-actions .btn{background:var(--t-gold); border-color:var(--t-gold); color:#10241A}
+.tk-actions .btn.alt{background:transparent; color:var(--t-ink); border-color:var(--t-line)}
+.disclaim{font-size:12px; color:var(--t-muted); padding:0 22px 16px}
+
+.tbl-wrap{overflow-x:auto; margin-top:12px; border:1px solid var(--line); border-radius:10px}
+table{border-collapse:collapse; width:100%; font-size:13.5px; font-variant-numeric:tabular-nums}
+th,td{padding:9px 12px; text-align:right; border-bottom:1px solid var(--line); white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+thead th{font-size:11.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); font-weight:700; background:var(--surface-2); position:sticky; top:0}
+tbody tr:last-child td{border-bottom:0}
+td.cur, th.cur{background:var(--brand-soft)}
+th.cur{color:var(--brand-fg)}
+tr.hl td{font-weight:700}
+tr.dep td{background:var(--accent-soft)}
+.neg{color:var(--bad)}
+.pos{color:var(--ok)}
+
+/* Timeline */
+.tl{list-style:none; margin:14px 0 0; padding:0; display:flex; flex-direction:column}
+.tl li{display:grid; grid-template-columns:22px minmax(0,1fr) auto; gap:4px 12px; position:relative; padding-bottom:14px}
+.tl li::before{content:""; position:absolute; left:10px; top:18px; bottom:-2px; width:2px; background:var(--line)}
+.tl li:last-child::before{display:none}
+.tl .dot{width:22px; height:22px; border-radius:50%; background:var(--surface); border:2px solid var(--brand-fg); display:grid; place-items:center; z-index:1}
+.tl .dot svg{width:12px; height:12px}
+.tl li.go .dot{background:var(--accent); border-color:var(--accent); color:var(--surface)}
+.tl li.pay .dot{background:var(--brand-soft)}
+.tl li.done .dot{background:var(--brand-fg); color:var(--surface)}
+.tl .t{font-weight:600}
+.tl .w{font-size:12.5px; color:var(--muted)}
+.tl .a{text-align:right; font-weight:700; font-variant-numeric:tabular-nums}
+.tl .a small{display:block; font-weight:500; color:var(--muted); font-size:12px}
+
+/* Fit + scoring */
+.fit-grid{display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:12px; margin-top:14px}
+.opt td .chip{font-size:10.5px}
+.opt td.act{width:1%}
+.score{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,260px); gap:18px; margin-top:14px; align-items:start}
+.crit{display:grid; grid-template-columns:minmax(0,1fr) 64px; gap:8px 12px; align-items:center; font-size:13.5px}
+.crit .w{font-size:12px; color:var(--muted)}
+.crit .sc{font-weight:700; text-align:right; font-variant-numeric:tabular-nums}
+.gauge{border-radius:var(--r); padding:16px; background:var(--surface-2); display:flex; flex-direction:column; gap:10px}
+.gauge .n{font-size:40px; font-weight:800; line-height:1; font-variant-numeric:tabular-nums}
+.bar{height:8px; border-radius:99px; background:var(--line); position:relative; overflow:hidden}
+.bar i{position:absolute; inset:0 auto 0 0; border-radius:99px}
+details{margin-top:14px}
+summary{cursor:pointer; font-weight:600; color:var(--brand-fg); font-size:13.5px}
+
+/* Internal */
+.internal{border-style:dashed}
+.badge-int{font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; background:var(--ink); color:var(--surface); padding:3px 8px; border-radius:6px}
+.assume{display:grid; grid-template-columns:repeat(5, minmax(0,1fr)); gap:10px; margin-top:14px}
+.assume .field > label{font-size:12px}
+.mini{display:flex; align-items:center; border:1px solid var(--line); border-radius:9px; overflow:hidden; background:var(--surface)}
+.mini input{border:0; outline:0; background:transparent; padding:8px 8px; width:100%; min-width:0; font-weight:600; font-variant-numeric:tabular-nums}
+.mini span{padding-right:8px; color:var(--muted); font-size:12.5px; font-weight:600; white-space:nowrap}
+.mini span.pre{padding:0 0 0 8px}
+.tiles{display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:12px; margin-top:16px}
+.tile{border:1px solid var(--line); border-radius:12px; padding:14px; display:flex; flex-direction:column; gap:4px; min-width:0}
+.tile .k{font-size:12px; color:var(--muted); font-weight:600}
+.tile .v{font-size:19px; font-weight:800; font-variant-numeric:tabular-nums; letter-spacing:-.01em; overflow-wrap:anywhere}
+.tile .s{font-size:12.5px; color:var(--muted)}
+.tile.ok{border-color:color-mix(in srgb, var(--ok) 40%, var(--line))}
+.tile.warn{border-color:color-mix(in srgb, var(--warn) 45%, var(--line)); background:var(--warn-soft)}
+.tile.bad{border-color:color-mix(in srgb, var(--bad) 45%, var(--line)); background:var(--bad-soft)}
+.chart-box{margin-top:16px; border:1px solid var(--line); border-radius:12px; padding:12px 12px 6px}
+.chart-head{display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; align-items:center; font-size:12.5px; color:var(--muted)}
+.legend{display:flex; gap:14px; flex-wrap:wrap}
+.legend i{display:inline-block; width:18px; height:3px; border-radius:2px; vertical-align:middle; margin-right:6px}
+.readout{font-weight:600; color:var(--ink); font-variant-numeric:tabular-nums}
+svg.chart{width:100%; height:auto; display:block}
+.foot-note{font-size:12.5px; color:var(--muted); margin-top:10px}
+
+footer{padding-block:24px 36px; font-size:12.5px; color:var(--muted)}
+.toast{position:fixed; left:50%; bottom:calc(20px + env(safe-area-inset-bottom, 0px)); transform:translateX(-50%) translateY(20px); background:var(--ink); color:var(--surface); padding:10px 16px; border-radius:10px; font-weight:600; font-size:13.5px; opacity:0; transition:all .25s; pointer-events:none; z-index:20}
+.toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
+textarea.copybox{width:100%; min-height:200px; border:1px solid var(--line); border-radius:10px; padding:10px; background:var(--surface); font:13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; color:var(--ink)}
+
+.only-client{display:none}
+.client .only-client{display:block}
+
+@media (max-width: 1020px){
+  .bench{grid-template-columns:minmax(0,1fr)}
+  .dock{display:flex; position:fixed; left:0; right:0; bottom:0; z-index:15; border:0; cursor:pointer; text-align:left;
+    background:var(--t-bg); color:var(--t-ink); justify-content:space-between; align-items:center; gap:12px;
+    padding:10px max(16px, env(safe-area-inset-right, 0px)) calc(10px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+    box-shadow:0 -6px 18px rgba(0,0,0,.18); transition:transform .2s}
+  .dock.away{transform:translateY(110%)}
+  .dock .k{display:block; font-size:11.5px; color:var(--t-muted)}
+  .dock .v{display:block; font-weight:800; font-size:18px; color:var(--t-gold); font-variant-numeric:tabular-nums; line-height:1.2}
+  .dock .r{text-align:right; font-size:12.5px; color:var(--t-ink); font-weight:600}
+  .dock .r span{display:block; color:var(--t-muted); font-weight:500}
+  body{padding-bottom:76px}
+  .toast{bottom:calc(86px + env(safe-area-inset-bottom, 0px))}
+  .assume{grid-template-columns:repeat(3, minmax(0,1fr))}
+  .tiles{grid-template-columns:repeat(2, minmax(0,1fr))}
+}
+@media (max-width: 760px){
+  .rail{grid-template-columns:repeat(2, minmax(0,1fr))}
+  .rail .prog:last-child{grid-column:span 2}
+  .fit-grid{grid-template-columns:minmax(0,1fr)}
+  .score{grid-template-columns:minmax(0,1fr)}
+  .brand .sep, .brand .app-name{display:none}
+}
+@media (max-width: 520px){
+  .tk-trio{grid-template-columns:repeat(2, minmax(0,1fr))}
+  .tk-stub{grid-template-columns:repeat(2, minmax(0,1fr))}
+  .assume{grid-template-columns:repeat(2, minmax(0,1fr))}
+  .tiles{grid-template-columns:minmax(0,1fr)}
+  .panel{padding:16px}
+  .row2{grid-template-columns:minmax(0,1fr) 112px}
+  .opt-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .opt-row .act{justify-self:end; align-self:end}
+}
+@media (prefers-reduced-motion: reduce){ *{transition:none !important} }
+</style>
+<style>html{-webkit-text-size-adjust:100%}body{margin:0}img{max-width:100%}.top{padding-top:env(safe-area-inset-top,0px)}footer{padding-bottom:calc(36px + env(safe-area-inset-bottom,0px))}</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <div class="brand">
+      <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 0c.9 6.6 4.4 10.6 12 12-7.6 1.4-11.1 5.4-12 12-.9-6.6-4.4-10.6-12-12 7.6-1.4 11.1-5.4 12-12z" fill="var(--t-gold)"/></svg>
+      <div class="wordmark"><b>Safar Amanah</b><span>PROJECT</span></div>
+      <div class="sep" aria-hidden="true"></div>
+      <div class="app-name"><strong>Simulator Negosiasi</strong>Pembiayaan umrah syariah · akad murabahah</div>
+    </div>
+    </div>
+  <div class="fence">
+    <div class="wrap">
+      <span class="lock"><svg width="13" height="13" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 10V7a6 6 0 1112 0v3h1a1 1 0 011 1v10a1 1 0 01-1 1H5a1 1 0 01-1-1V11a1 1 0 011-1h1zm2 0h8V7a4 4 0 10-8 0v3z" fill="currentColor"/></svg>Syarat program:</span>
+      <span id="fenceTxt" style="display:contents"></span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <nav class="rail" id="rail" aria-label="Pilih program"></nav>
+
+  <main class="bench">
+    <!-- Ruang negosiasi -->
+    <section class="panel" aria-labelledby="h-nego">
+      <h2 id="h-nego">Ruang negosiasi <button class="btn ghost small" id="resetBtn" type="button">Pakai DP minimum</button></h2>
+      <p class="sub" id="progSub"></p>
+      <div class="stack" style="margin-top:16px">
+        <div class="row2">
+          <div class="field">
+            <label for="harga">Harga paket <span class="hint">per jamaah</span></label>
+            <div class="money"><span>Rp</span><input id="harga" inputmode="numeric" autocomplete="off"></div>
+          </div>
+          <div class="field">
+            <label for="pax">Jamaah</label>
+            <div class="stepper"><button type="button" id="paxMinus" aria-label="Kurangi jamaah">−</button><input id="pax" inputmode="numeric" value="1"><button type="button" id="paxPlus" aria-label="Tambah jamaah">+</button></div>
+          </div>
+        </div>
+
+        <div class="stack" id="tabFields" hidden style="gap:18px">
+          <div class="field">
+            <div class="lbl"><span>Lama nabung DP</span><span class="big-val" id="nabungVal"></span></div>
+            <div class="range"><input type="range" id="nabung" min="1" max="12" step="1" aria-label="Lama nabung DP dalam bulan"></div>
+            <div class="scale"><span>1 bln</span><span>12 bln</span></div>
+          </div>
+          <div class="row2" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr)">
+            <div class="field">
+              <label for="awal">Setoran awal</label>
+              <div class="money"><span>Rp</span><input id="awal" inputmode="numeric" autocomplete="off"></div>
+            </div>
+            <div class="field">
+              <label for="lanjut">Setelah DP lengkap</label>
+              <select id="lanjut">
+                <option value="p1">Berangkat ≤45 hari</option>
+                <option value="p2">Berangkat 3 bulan</option>
+                <option value="p3">Berangkat 6 bulan</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="lbl"><span>Uang muka (DP)</span><span class="big-val" id="dpVal"></span></div>
+          <div class="range"><input type="range" id="dp" min="25" max="90" step="1" aria-label="DP dalam persen"></div>
+          <div class="scale"><span id="dpMinLbl"></span><span>90%</span></div>
+          <div class="money"><span>Rp</span><input id="dpRp" inputmode="numeric" autocomplete="off" aria-label="DP dalam rupiah"></div>
+          <div class="clampmsg" id="dpMsg" hidden></div>
+        </div>
+
+        <div class="field">
+          <div class="lbl"><span>Sesuai syarat program</span><span class="hint">terkunci</span></div>
+          <div class="locks" id="locks"></div>
+        </div>
+
+        <div class="field">
+          <label for="akad" id="akadLbl">Bulan akad</label>
+          <input type="month" id="akad">
+        </div>
+      </div>
+    </section>
+
+    <!-- Hasil -->
+    <section class="results" aria-live="polite">
+      <article class="ticket" id="ticket">
+        <svg class="star" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 0c.9 6.6 4.4 10.6 12 12-7.6 1.4-11.1 5.4-12 12-.9-6.6-4.4-10.6-12-12 7.6-1.4 11.1-5.4 12-12z" fill="var(--t-gold)"/></svg>
+        <div class="tk-main">
+          <div class="tk-head">
+            <div><div class="eyebrow">Simulasi penawaran</div><div class="pname" id="tkProg"></div></div>
+            <span class="tk-tag">Akad murabahah · cicilan tetap</span>
+          </div>
+          <div class="hero-num" id="tkHero"></div>
+          <div class="tk-trio" id="tkTrio"></div>
+        </div>
+        <div class="perf" aria-hidden="true"></div>
+        <div class="tk-stub" id="tkStub"></div>
+        <div class="tk-actions">
+          <button class="btn" id="copyBtn" type="button">Salin ringkasan untuk WhatsApp</button>
+          <button class="btn alt" id="showTextBtn" type="button">Lihat teks</button>
+        </div>
+        <p class="disclaim">Simulasi, belum mengikat. Harga dikunci saat akad setelah analisa kelayakan selesai.</p>
+      </article>
+      <textarea class="copybox" id="copyBox" hidden readonly aria-label="Teks ringkasan"></textarea>
+
+      <section class="panel" aria-labelledby="h-cmp">
+        <h2 id="h-cmp">Pilihan DP</h2>
+        <p class="sub">Makin besar DP, makin ringan cicilan. Ketuk salah satu untuk memakainya.</p>
+        <div class="opts" id="cmp"></div>
+      </section>
+
+      <section class="panel" aria-labelledby="h-jadwal">
+        <h2 id="h-jadwal">Jadwal pembayaran klien <button class="btn ghost small" id="detailBtn" type="button" aria-expanded="false">Rincian per bulan</button></h2>
+        <ol class="tl" id="timeline"></ol>
+        <div class="tbl-wrap" id="detailWrap" hidden><table id="detail"></table></div>
+      </section>
+    </section>
+  </main>
+
+  <!-- Cocokkan dengan kemampuan klien -->
+  <section class="panel" style="margin-top:20px" aria-labelledby="h-fit">
+    <h2 id="h-fit">Cocokkan dengan kemampuan klien</h2>
+    <p class="sub">Isi kondisi calon jamaah. Angka awal di bawah hanya contoh. Batas kemampuan bayar: cicilan maks. 30% penghasilan bersih.</p>
+    <div class="fit-grid">
+      <div class="field"><label for="fDp">DP yang dimiliki</label><div class="money"><span>Rp</span><input id="fDp" inputmode="numeric" autocomplete="off"></div></div>
+      <div class="field"><label for="fCic">Sanggup cicil per bulan</label><div class="money"><span>Rp</span><input id="fCic" inputmode="numeric" autocomplete="off"></div></div>
+      <div class="field"><label for="fGaji">Penghasilan bersih per bulan</label><div class="money"><span>Rp</span><input id="fGaji" inputmode="numeric" autocomplete="off"></div></div>
+    </div>
+    <p class="note" id="fitBudget" style="margin-top:10px"></p>
+    <div class="fitcards" id="fit"></div>
+
+    </section>
+
+  <footer>
+    Angka pada halaman ini adalah simulasi. Nilai final mengikuti akad setelah analisa kelayakan oleh KSPPS Syirkah Kebaikan Indonesia.
+  </footer>
+</div>
+<button class="dock" id="dock" type="button" aria-label="Lihat kartu penawaran"></button>
+<div class="toast" id="toast" role="status"></div>
+
+<script>const BATAS = { dpMin: 0.25, dpMax: 0.90, marginMin: 0.12, marginMax: 0.15, tenorMin: 3, tenorMax: 24 };
+const PROGRAMS = {
+  p1: { id:'p1', nama:'Berangkat ≤45 Hari', pendek:'Program 1',
+        komite:true, harga:37e6, pax:1, dpMin:.50, dp:.50, margin:.15, tenor:24,
+        travel:[[0,.15],[2,.85]], berangkat:2, cicilanMulai:3,
+        desc:'Untuk jamaah yang ingin segera berangkat. Seluruh cicilan berjalan setelah pulang.' },
+  p2: { id:'p2', nama:'Berangkat 3 Bulan', pendek:'Program 2',
+        komite:true, harga:37e6, pax:1, dpMin:.40, dp:.40, margin:.14, tenor:24,
+        travel:[[0,.15],[3,.85]], berangkat:3, cicilanMulai:2,
+        desc:'Dua kali cicilan sebelum berangkat, sisanya setelah pulang.' },
+  p3: { id:'p3', nama:'Berangkat 6 Bulan', pendek:'Program 3',
+        komite:true, harga:36e6, pax:1, dpMin:.25, dp:.25, margin:.12, tenor:24,
+        travel:[[0,.15],[7,.85]], berangkat:7, cicilanMulai:2,
+        desc:'DP paling ringan. Enam kali cicilan sebelum berangkat.' },
+  b2b: { id:'b2b', nama:'B2B / Rombongan', pendek:'B2B',
+        komite:false, ikut:'p1', harga:40e6, pax:20, dpMin:.50, dp:.50, margin:.15, tenor:24,
+        travel:[[0,1]], berangkat:1, cicilanMulai:3,
+        desc:'Paket instansi atau rombongan dalam satu akad. Travel dilunasi 100% di bulan akad. Mengikuti syarat Program 1.' },
+  tab: { id:'tab', nama:'Tabungan Umrah', pendek:'Tabungan',
+        komite:false, harga:36e6, pax:1, dpMin:.25, dp:.25, margin:.12, tenor:24,
+        nabung:6, lanjut:'p3',
+        desc:'Nabung DP dulu secara rutin. Setelah DP terkumpul, akad dan mengikuti syarat program keberangkatan yang dipilih.' }
+};
+const clamp = (v,a,b) => Math.min(b, Math.max(a, v));
+
+function build(inp){
+  const P = PROGRAMS[inp.program];
+  const pax = Math.max(1, Math.round(inp.pax || 1));
+  const harga = inp.hargaPerPax * pax;
+  const isTab = P.id === 'tab';
+  const T = isTab ? PROGRAMS[inp.lanjut || P.lanjut] : P;          // template jadwal
+  const S0 = isTab ? T : P;                                         // sumber syarat
+  const dpMinSyarat = Math.max(BATAS.dpMin, S0.dpMin);
+  const dpPct = clamp(inp.dp, dpMinSyarat, BATAS.dpMax);           // DP tidak bisa di bawah syarat
+  const margin = clamp(S0.margin, BATAS.marginMin, BATAS.marginMax); // margin dikunci sesuai syarat
+  const tenor = clamp(S0.tenor, BATAS.tenorMin, BATAS.tenorMax);     // tenor dikunci sesuai syarat
+  const dp = harga * dpPct;
+  const pokok = harga - dp;
+  const totalMargin = pokok * margin * tenor / 12;
+  const piutang = pokok + totalMargin;
+  const cicilan = piutang / tenor;
+  const totalBayar = dp + piutang;
+  const nabung = isTab ? clamp(Math.round(inp.nabung || P.nabung), 1, 12) : 0;
+  const awal = isTab ? clamp(inp.awal || 0, 0, dp) : 0;
+  const akad = nabung;
+  const setoran = isTab ? (dp - awal) / nabung : 0;
+  const travel = T.travel.map(([m,p]) => ({ m: akad + m, amt: harga * p }));
+  const pelunasan = Math.max(...travel.map(t => t.m));
+  const berangkat = akad + T.berangkat;
+  const cicilanMulai = akad + T.cicilanMulai;
+  const cicilanAkhir = cicilanMulai + tenor - 1;
+  const cicilanSebelum = Math.max(0, Math.min(tenor, berangkat - cicilanMulai + 1));
+  const sisaSaatBerangkat = piutang - cicilan * cicilanSebelum;
+  return { P, T, S0, dpMinSyarat, pax, harga, dpPct, dp, pokok, margin, tenor, totalMargin, piutang, cicilan, totalBayar,
+    isTab, nabung, awal, akad, setoran, travel, pelunasan, berangkat, cicilanMulai, cicilanAkhir, cicilanSebelum,
+    cicilanSesudah: tenor - cicilanSebelum, sisaSaatBerangkat };
+}
+const nf = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 });
+const rp = n => (n < -0.5 ? '−' : '') + 'Rp ' + nf.format(Math.abs(Math.round(n)));
+const rpS = n => { const a = Math.abs(n), s = n < -0.5 ? '−' : ''; if (a >= 1e9) return s + 'Rp ' + (a/1e9).toLocaleString('id-ID', {maximumFractionDigits:2}) + ' M'; if (a >= 1e6) return s + 'Rp ' + (a/1e6).toLocaleString('id-ID', {maximumFractionDigits:2}) + ' jt'; return rp(n); };
+const pc = (x, d = 0) => (x * 100).toLocaleString('id-ID', { maximumFractionDigits: d }) + '%';
+const pc2 = x => (x * 100).toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
+const parseRp = s => { const d = String(s).replace(/[^\d]/g, ''); return d ? Number(d) : 0; };
+const parseDec = s => { const v = parseFloat(String(s).replace(',', '.')); return isFinite(v) ? v : null; };
+const BLN = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+const BLNF = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+const mlab = (ym, add, full) => { const [y, m] = ym.split('-').map(Number); const d = m - 1 + add; const yy = y + Math.floor(d / 12); const mm = ((d % 12) + 12) % 12; return (full ? BLNF : BLN)[mm] + ' ' + yy; };
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const now = new Date();
+const ymNow = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+const S = {
+  program:'p1', hargaPerPax:37e6, pax:1, dp:.50, margin:.15, tenor:24, nabung:6, lanjut:'p3', awal:0,
+  akad: ymNow, hargaEdited:false,
+  ov:{},
+  fit:{ dp:15e6, cic:1.4e6, gaji:7e6 },
+  sc:{ stab:5, riwayat:5, penjamin:1, survei:3 },
+  client:false, detail:false, dpMsg:''
+};
+S.client = true;
+
+function applyProgram(id, keepHarga){
+  const P = PROGRAMS[id], wasB2B = S.program === 'b2b';
+  S.program = id; S.dp = P.dp; S.margin = P.margin; S.tenor = P.tenor;
+  if (!keepHarga || !S.hargaEdited || (id === 'b2b') !== wasB2B){ S.hargaPerPax = P.harga; S.hargaEdited = false; }
+  if ((id === 'b2b') !== wasB2B || !keepHarga) S.pax = P.pax;
+  if (id === 'tab'){ S.nabung = P.nabung; S.lanjut = P.lanjut; S.awal = 0; }
+  S.ov = {};
+  S.dpMsg = '';
+}
+const inputOf = (o = {}) => ({ program:S.program, hargaPerPax:S.hargaPerPax, pax:S.pax, dp:S.dp, margin:S.margin, tenor:S.tenor,
+  nabung:S.nabung, lanjut:S.lanjut, awal:S.awal, ...o });
+const ICON = {
+  plane:'<svg viewBox="0 0 24 24"><path fill="currentColor" d="M21 16v-2l-8-5V3.5a1.5 1.5 0 00-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg>',
+  pen:'<svg viewBox="0 0 24 24"><path fill="currentColor" d="M3 17.25V21h3.75L17.8 9.94l-3.75-3.75L3 17.25zm17.7-10.2a1 1 0 000-1.42l-2.33-2.33a1 1 0 00-1.42 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>',
+  check:'<svg viewBox="0 0 24 24"><path fill="currentColor" d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg>',
+  coin:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5" fill="currentColor"/></svg>'
+};
+
+function renderRail(){
+  if ($('rail').children.length){ $('rail').querySelectorAll('[data-p]').forEach(b => b.setAttribute('aria-pressed', b.dataset.p === S.program)); return; }
+  $('rail').innerHTML = Object.values(PROGRAMS).map(P => {
+    const d = P.id === 'b2b' ? `Rombongan · DP min. ${pc(P.dpMin)} · ${P.tenor} bln` : P.id === 'tab' ? 'Nabung DP, lalu ikut Program 1/2/3' :
+      `DP min. ${pc(P.dpMin)} · ${P.tenor} bln`;
+    return `<button class="prog" type="button" data-p="${P.id}" aria-pressed="${S.program === P.id}"><span class="pn">${P.nama}</span><span class="pd">${d}</span></button>`;
+  }).join('');
+}
+
+function setRange(el, v, min, max){ el.value = v; el.style.setProperty('--p', ((v - min) / (max - min) * 100) + '%'); }
+const tickPos = (v, min, max) => `calc(10px + (100% - 20px) * ${(v - min) / (max - min)})`;
+
+function renderControls(c){
+  const P = PROGRAMS[S.program];
+  $('progSub').textContent = S.program === 'tab' ? `${P.desc} Saat ini: ${PROGRAMS[S.lanjut].pendek} (${PROGRAMS[S.lanjut].nama}).` : P.desc;
+  if (document.activeElement !== $('harga')) $('harga').value = nf.format(S.hargaPerPax);
+  if (document.activeElement !== $('pax')) $('pax').value = S.pax;
+  $('tabFields').hidden = S.program !== 'tab';
+  if (S.program === 'tab'){
+    setRange($('nabung'), S.nabung, 1, 12);
+    $('nabungVal').innerHTML = `${S.nabung}<small>bulan</small>`;
+    if (document.activeElement !== $('awal')) $('awal').value = nf.format(S.awal);
+    $('lanjut').value = S.lanjut;
+  }
+  const minP = Math.round(c.dpMinSyarat * 100);
+  const dpEl = $('dp'); dpEl.min = minP; dpEl.max = 90;
+  setRange(dpEl, Math.round(c.dpPct * 100), minP, 90);
+  $('dpMinLbl').textContent = `${minP}% · minimum syarat`;
+  $('dpVal').innerHTML = `${pc(c.dpPct)}<small>${rpS(c.dp)}</small>`;
+  if (document.activeElement !== $('dpRp')) $('dpRp').value = nf.format(Math.round(c.dp));
+  $('dpMsg').hidden = !S.dpMsg; $('dpMsg').textContent = S.dpMsg;
+  const LOCK = '<svg width="11" height="11" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 10V7a6 6 0 1112 0v3h1a1 1 0 011 1v10a1 1 0 01-1 1H5a1 1 0 01-1-1V11a1 1 0 011-1h1zm2 0h8V7a4 4 0 10-8 0v3z" fill="currentColor"/></svg>';
+  $('locks').innerHTML = `<div class="lock-item"><span class="k">${LOCK} Tenor cicilan</span><span class="v">${c.tenor} bulan</span><span class="s">cicilan tetap tiap bulan</span></div>`;
+  $('akad').value = S.akad;
+  $('akadLbl').textContent = S.program === 'tab' ? 'Bulan mulai nabung' : 'Bulan akad';
+}
+
+function renderTicket(c){
+  const P = c.P, ym = S.akad;
+  $('tkProg').textContent = `${P.pendek} · ${P.nama}` + (c.pax > 1 ? ` · ${c.pax} jamaah` : '');
+  if (c.isTab){
+    $('tkHero').innerHTML = `<span class="lab">Setoran tabungan DP</span><span class="val">${rp(c.setoran)}<small>/bulan × ${c.nabung}</small></span>
+      <span class="then">lalu cicilan ${rp(c.cicilan)}/bulan × ${c.tenor} setelah akad</span>`;
+  } else {
+    $('tkHero').innerHTML = `<span class="lab">Cicilan per bulan</span><span class="val">${rp(c.cicilan)}<small>× ${c.tenor} bulan</small></span>`;
+  }
+  $('tkTrio').innerHTML = `
+    <div><span class="k">Uang muka</span><span class="v">${rp(c.dp)}</span><span class="s">${pc(c.dpPct)} dari harga${c.isTab ? ' · dari tabungan' : ''}</span></div>
+    <div><span class="k">Total pembayaran</span><span class="v">${rp(c.totalBayar)}</span><span class="s">sudah termasuk DP</span></div>
+    <div><span class="k">Estimasi berangkat</span><span class="v">${mlab(ym, c.berangkat)}</span><span class="s">bulan ke-${c.berangkat}${c.isTab ? ' dari mulai nabung' : ' setelah akad'}</span></div>`;
+  $('tkStub').innerHTML = `
+    <div><span class="k">Harga paket${c.pax > 1 ? ` (${c.pax} jamaah)` : ''}</span><span class="v">${rp(c.harga)}</span></div>
+    <div><span class="k">Pokok dibiayai</span><span class="v">${rp(c.pokok)}</span></div>
+    <div><span class="k">Cicilan pertama</span><span class="v">${mlab(S.akad, c.cicilanMulai)}</span></div>
+    <div><span class="k">Lunas</span><span class="v">${mlab(S.akad, c.cicilanAkhir)}</span></div>
+    <div><span class="k">Cicilan sebelum / sesudah berangkat</span><span class="v">${c.cicilanSebelum} / ${c.cicilanSesudah} kali</span></div>
+    <div><span class="k">Sisa kewajiban saat berangkat</span><span class="v">${rp(c.sisaSaatBerangkat)}</span></div>`;
+}
+
+function waText(c){
+  const P = c.P, ym = S.akad, L = [];
+  L.push('*Simulasi Pembiayaan Umrah — Safar Amanah*');
+  L.push(`Program: ${P.nama}${c.pax > 1 ? ` (${c.pax} jamaah)` : ''}`);
+  L.push(`Harga paket: ${rp(c.harga)}`);
+  if (c.isTab){
+    L.push(`Tabungan DP: ${c.awal > 0 ? `setoran awal ${rp(c.awal)}, lalu ` : ''}${rp(c.setoran)}/bulan × ${c.nabung} bulan (${mlab(ym, 1)} – ${mlab(ym, c.nabung)})`);
+    L.push(`DP terkumpul (${pc(c.dpPct)}): ${rp(c.dp)}, akad ${mlab(ym, c.akad)}`);
+  } else {
+    L.push(`DP (${pc(c.dpPct)}): ${rp(c.dp)}, dibayar saat akad ${mlab(ym, 0)}`);
+  }
+  L.push(`*Cicilan: ${rp(c.cicilan)} × ${c.tenor} bulan* (${mlab(ym, c.cicilanMulai)} – ${mlab(ym, c.cicilanAkhir)})`);
+  L.push(`Total pembayaran: ${rp(c.totalBayar)}`);
+  L.push(`Estimasi berangkat: ${mlab(ym, c.berangkat, true)}`);
+  L.push('');
+  L.push('Akad murabahah: harga dikunci saat akad, cicilan tetap sampai lunas, tanpa bunga.');
+  L.push('_Simulasi belum mengikat. Final setelah analisa kelayakan & kelengkapan berkas._');
+  return L.join('\n');
+}
+
+function renderCompare(c){
+  const minP = Math.round(c.dpMinSyarat * 100), cur = Math.round(c.dpPct * 100);
+  const set = [minP, minP + 10, minP + 20, minP + 30].filter(x => x <= 90);
+  if (!set.includes(cur)) set.push(cur);
+  set.sort((a, b) => a - b);
+  $('cmp').innerHTML = set.map(p => {
+    const x = build(inputOf({ dp: p / 100 }));
+    const on = p === cur;
+    const ratio = S.fit.gaji > 0 ? x.cicilan / S.fit.gaji : null;
+    const act = on ? '<span class="chip ok">Dipilih</span>'
+      : ratio != null ? `<span class="chip ${ratio > .30 ? 'bad' : ratio > .25 ? 'warn' : 'mute'}">rasio ${pc(ratio, 1)}</span>` : '<span class="chip mute">Pakai</span>';
+    return `<button type="button" class="opt-row" data-use-dp="${p}" aria-pressed="${on}">
+      <div><div class="k">DP ${p}%${p === minP ? ' · minimum' : ''}</div><div class="v">${rp(x.dp)}</div></div>
+      <div><div class="k">${x.isTab ? 'Tabungan / cicilan' : 'Cicilan / bulan'}</div><div class="v big">${x.isTab ? `${rpS(x.setoran)} · ${rpS(x.cicilan)}` : rp(x.cicilan)}</div></div>
+      <div><div class="k">Total pembayaran</div><div class="v">${rp(x.totalBayar)}</div></div>
+      <div class="act">${act}</div></button>`;
+  }).join('');
+}
+
+function renderTimeline(c){
+  const ym = S.akad, items = [];
+  const range = (a, b) => a === b ? `${mlab(ym, a)}` : `${mlab(ym, a)} – ${mlab(ym, b)}`;
+  const brange = (a, b) => a === b ? `bulan ${a}` : `bulan ${a}–${b}`;
+  if (c.isTab){
+    if (c.awal > 0) items.push({ cls:'pay', ic:ICON.coin, t:'Setoran awal tabungan', w:`${mlab(ym, 0)} · bulan 0`, a:rp(c.awal) });
+    items.push({ cls:'pay', ic:ICON.coin, t:`Setoran tabungan DP ke-1${c.nabung > 1 ? ` s.d. ${c.nabung}` : ''}`, w:`${range(1, c.nabung)} · ${brange(1, c.nabung)}`, a:rp(c.setoran), sub:'per bulan' });
+    items.push({ cls:'', ic:ICON.pen, t:'DP lengkap, akad murabahah', w:`${mlab(ym, c.akad)} · bulan ${c.akad}`, a:rp(c.dp), sub:'dari tabungan' });
+  } else {
+    items.push({ cls:'', ic:ICON.pen, t:'Akad murabahah & bayar DP', w:`${mlab(ym, 0)} · bulan 0`, a:rp(c.dp) });
+  }
+  const s1 = c.cicilanSebelum, a1 = c.cicilanMulai;
+  if (s1 > 0) items.push({ cls:'pay', ic:ICON.coin, t:`Cicilan ke-1${s1 > 1 ? ` s.d. ${s1}` : ''}`, w:`${range(a1, a1 + s1 - 1)} · ${brange(a1, a1 + s1 - 1)}`, a:rp(c.cicilan), sub:'per bulan' });
+  items.push({ cls:'go', ic:ICON.plane, t:'Estimasi berangkat umrah', w:`${mlab(ym, c.berangkat, true)} · bulan ${c.berangkat}. Safar Amanah melunasi travel.`, a:'', sub:'' });
+  if (c.cicilanSesudah > 0){ const a2 = a1 + s1, b2 = c.cicilanAkhir;
+    items.push({ cls:'pay', ic:ICON.coin, t:`Cicilan ke-${s1 + 1}${c.tenor > s1 + 1 ? ` s.d. ${c.tenor}` : ''}`, w:`${range(a2, b2)} · ${brange(a2, b2)}`, a:rp(c.cicilan), sub:'per bulan' }); }
+  items.push({ cls:'done', ic:ICON.check, t:'Lunas', w:`${mlab(ym, c.cicilanAkhir, true)}`, a:rp(c.totalBayar), sub:'total dibayar' });
+  $('timeline').innerHTML = items.map(x => `<li class="${x.cls}"><span class="dot">${x.ic}</span><div><div class="t">${x.t}</div><div class="w">${x.w}</div></div><div class="a">${x.a}${x.sub ? `<small>${x.sub}</small>` : ''}</div></li>`).join('');
+  $('detailWrap').hidden = !S.detail; $('detailBtn').setAttribute('aria-expanded', S.detail);
+  $('detailBtn').textContent = S.detail ? 'Sembunyikan rincian' : 'Rincian per bulan';
+  if (!S.detail) return;
+  let sisa = c.totalBayar, rows = '';
+  for (let t = 0; t <= c.cicilanAkhir; t++){
+    let ket = [], bayar = 0;
+    if (c.isTab && t === 0 && c.awal > 0){ ket.push('Setoran awal'); bayar += c.awal; }
+    if (c.isTab && t >= 1 && t <= c.nabung){ ket.push(`Tabungan ke-${t}`); bayar += c.setoran; }
+    if (!c.isTab && t === 0){ ket.push('Akad & DP'); bayar += c.dp; }
+    if (c.isTab && t === c.akad) ket.push('DP lengkap · akad');
+    if (t >= c.cicilanMulai && t <= c.cicilanAkhir){ ket.push(`Cicilan ke-${t - c.cicilanMulai + 1}`); bayar += c.cicilan; }
+    if (t === c.berangkat) ket.push('✈ Berangkat');
+    sisa -= bayar;
+    rows += `<tr class="${t === c.berangkat ? 'dep' : ''}"><td>${t}</td><td style="text-align:left">${mlab(ym, t)}</td><td style="text-align:left">${ket.join(' · ') || '—'}</td><td>${bayar ? rp(bayar) : '—'}</td><td>${rp(Math.max(0, sisa))}</td></tr>`;
+  }
+  $('detail').innerHTML = `<thead><tr><th>Bulan</th><th style="text-align:left">Periode</th><th style="text-align:left">Keterangan</th><th>Dibayar klien</th><th>Sisa kewajiban</th></tr></thead><tbody>${rows}</tbody>`;
+}
+
+function renderFit(c){
+  const F = S.fit, harga = c.harga;
+  if (document.activeElement !== $('fDp')) $('fDp').value = nf.format(F.dp);
+  if (document.activeElement !== $('fCic')) $('fCic').value = nf.format(F.cic);
+  if (document.activeElement !== $('fGaji')) $('fGaji').value = F.gaji ? nf.format(F.gaji) : '';
+  const cap = F.gaji > 0 ? F.gaji * .30 : Infinity;
+  const budget = Math.min(F.cic || Infinity, cap);
+  $('fitBudget').innerHTML = isFinite(budget)
+    ? `Batas cicilan yang dipakai: <b>${rp(budget)}</b>/bulan` + (F.gaji > 0 && cap < (F.cic || Infinity) ? ` (dibatasi 30% penghasilan ${rp(F.gaji)}).` : '.') + ` Harga acuan: ${rp(harga)}${c.pax > 1 ? ` untuk ${c.pax} jamaah` : ''}.`
+    : 'Isi kemampuan cicil atau penghasilan untuk melihat rekomendasi.';
+  const ratioTxt = v => F.gaji > 0 ? pc(v / F.gaji, 1) : '—';
+  const card = (o) => `<div class="fc ${o.good ? 'good' : ''}"><div class="ttl">${o.label}</div>
+    <dl>${o.rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>
+    <div class="note">${o.note}</div>
+    <div class="ft">${o.chip}${o.btn || ''}</div></div>`;
+  const ids = S.program === 'b2b' ? ['b2b'] : ['p1', 'p2', 'p3'];
+  const cards = [];
+  for (const id of ids){
+    const P = PROGRAMS[id];
+    const dpMinRp = harga * P.dpMin, dpUse = Math.min(Math.max(F.dp, dpMinRp), harga * BATAS.dpMax);
+    const x = build({ program:id, hargaPerPax:S.hargaPerPax, pax:S.pax, dp:dpUse / harga });
+    const short = dpMinRp - F.dp;
+    const perBln = 1 / x.tenor + x.margin / 12;
+    let chip, note, useDp = null, good = false;
+    if (short > 0.5){ chip = `<span class="chip bad">DP kurang ${rpS(short)}</span>`; note = `DP minimum ${pc(P.dpMin)} = ${rp(dpMinRp)}.`; }
+    else if (x.cicilan > budget + 0.5){
+      const need = harga - budget / perBln; chip = '<span class="chip warn">Cicilan lewat batas</span>';
+      if (need / harga <= BATAS.dpMax){ useDp = Math.ceil(need / harga * 100) / 100; note = `Masuk batas bila DP dinaikkan ke ${rp(harga * useDp)} (${pc(useDp)}).`; }
+      else note = 'DP yang dibutuhkan melebihi 90%.';
+    }
+    else { chip = '<span class="chip ok">Cocok</span>'; note = `Masih ada ruang ${rp(budget - x.cicilan)}/bln.`; useDp = x.dpPct; good = true; }
+    cards.push(card({ label:`${P.pendek} · ${P.nama}`, good, chip, note,
+      rows:[['DP', rp(x.dp)], ['Cicilan', `${rp(x.cicilan)}/bln`], ['Rasio penghasilan', ratioTxt(x.cicilan)], ['Berangkat', mlab(S.akad, x.berangkat)]],
+      btn: useDp != null ? `<button class="btn small" type="button" data-fit="${id}" data-fdp="${useDp}">Pakai</button>` : '' }));
+  }
+  if (S.program !== 'b2b'){
+    const tgt = harga * PROGRAMS.p3.dpMin;
+    if (F.dp < tgt - 0.5){
+      const need = tgt - F.dp;
+      const n = clamp(isFinite(budget) ? Math.ceil(need / budget) : 6, 1, 12);
+      const x = build({ program:'tab', hargaPerPax:S.hargaPerPax, pax:S.pax, dp:PROGRAMS.p3.dpMin, nabung:n, lanjut:'p3', awal:F.dp });
+      const ok = x.setoran <= budget + 0.5 && x.cicilan <= budget + 0.5;
+      cards.push(card({ label:`Tabungan · nabung DP ${n} bulan`, good:ok,
+        chip: ok ? '<span class="chip ok">Cocok</span>' : '<span class="chip warn">Lewat batas</span>',
+        note:`DP ${rp(F.dp)} jadi setoran awal, lalu ikut syarat Program 3.`,
+        rows:[['Setoran tabungan', `${rp(x.setoran)}/bln`], ['Cicilan setelah akad', `${rp(x.cicilan)}/bln`], ['Rasio penghasilan', ratioTxt(x.cicilan)], ['Berangkat', mlab(S.akad, x.berangkat)]],
+        btn:`<button class="btn small" type="button" data-fit="tab" data-fn="${n}">Pakai</button>` }));
+    }
+  }
+  $('fit').innerHTML = cards.join('');
+}
+
+let lastC = null;
+function render(){
+  document.documentElement.classList.toggle('client', S.client);
+  document.body.classList.toggle('client', S.client);
+  const inp = inputOf();
+  const c = build(inp); lastC = c;
+  S.dp = c.dpPct; S.margin = c.margin; S.tenor = c.tenor;   // state ikut nilai yang lolos syarat
+  $('fenceTxt').innerHTML = `<span><b>${c.P.pendek}${c.isTab ? ' → ' + c.T.pendek : c.P.ikut ? ' (ikut ' + PROGRAMS[c.P.ikut].pendek + ')' : ''}</b></span>
+    <span>DP <b>min. ${pc(c.dpMinSyarat)}</b></span><span>Tenor <b>${c.tenor} bulan</b></span>`;
+  $('dock').innerHTML = c.isTab
+    ? `<span><span class="k">Tabungan DP / bulan</span><span class="v">${rp(c.setoran)}</span></span><span class="r">lalu cicil ${rpS(c.cicilan)}/bln<span>Berangkat ${mlab(S.akad, c.berangkat)}</span></span>`
+    : `<span><span class="k">Cicilan / bulan × ${c.tenor}</span><span class="v">${rp(c.cicilan)}</span></span><span class="r">DP ${pc(c.dpPct)} · ${rpS(c.dp)}<span>Berangkat ${mlab(S.akad, c.berangkat)}</span></span>`;
+  renderRail(); renderControls(c);
+  renderTicket(c); renderCompare(c); renderTimeline(c); renderFit(c);
+  $('copyBox').value = waText(c);
+}
+function toast(msg){ const t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 1800); }
+$('rail').addEventListener('click', e => { const b = e.target.closest('[data-p]'); if (!b) return; applyProgram(b.dataset.p, true); render(); });
+$('resetBtn').addEventListener('click', () => { applyProgram(S.program, true); render(); toast('DP kembali ke minimum syarat program'); });
+function moneyInput(id, set, get){
+  const el = $(id);
+  el.addEventListener('input', () => { const v = parseRp(el.value); el.value = v ? nf.format(v) : ''; set(v); render(); });
+  el.addEventListener('blur', () => { const v = get(); el.value = v ? nf.format(Math.round(v)) : ''; });
+}
+moneyInput('harga', v => { if (v > 0){ S.hargaPerPax = v; S.hargaEdited = true; S.dpMsg = ''; } }, () => S.hargaPerPax);
+moneyInput('awal', v => { S.awal = v; }, () => lastC && lastC.isTab ? lastC.awal : S.awal);
+moneyInput('fDp', v => { S.fit.dp = v; }, () => S.fit.dp);
+moneyInput('fCic', v => { S.fit.cic = v; }, () => S.fit.cic);
+moneyInput('fGaji', v => { S.fit.gaji = v; }, () => S.fit.gaji);
+$('dpRp').addEventListener('input', () => {
+  const el = $('dpRp'), v = parseRp(el.value); el.value = v ? nf.format(v) : '';
+  const harga = S.hargaPerPax * S.pax; if (!harga) return;
+  let p = v / harga; S.dpMsg = '';
+  const P = PROGRAMS[S.program], min = Math.max(BATAS.dpMin, S.program === 'tab' ? PROGRAMS[S.lanjut].dpMin : P.dpMin);
+  if (p < min - 1e-9){ S.dpMsg = `DP minimal ${P.nama} adalah ${pc(min)} = ${rp(harga * min)} sesuai syarat. Tidak bisa di bawah itu.`; p = min; }
+  if (p > BATAS.dpMax){ S.dpMsg = `DP maksimal di simulator 90% = ${rp(harga * BATAS.dpMax)}.`; p = BATAS.dpMax; }
+  S.dp = p; render();
+});
+$('dpRp').addEventListener('blur', () => { if (lastC) $('dpRp').value = nf.format(Math.round(lastC.dp)); });
+$('dp').addEventListener('input', e => { S.dp = Number(e.target.value) / 100; S.dpMsg = ''; render(); });
+$('nabung').addEventListener('input', e => { S.nabung = Number(e.target.value); render(); });
+$('lanjut').addEventListener('change', e => { S.lanjut = e.target.value; S.dp = PROGRAMS[S.lanjut].dpMin; S.dpMsg = ''; render(); });
+$('akad').addEventListener('change', e => { if (/^\d{4}-\d{2}$/.test(e.target.value)) { S.akad = e.target.value; render(); } });
+$('cmp').addEventListener('click', e => { const b = e.target.closest('[data-use-dp]'); if (!b || b.getAttribute('aria-pressed') === 'true') return; S.dp = Number(b.dataset.useDp) / 100; S.dpMsg = ''; render(); toast(`DP ${b.dataset.useDp}% dipakai`); });
+$('dock').addEventListener('click', () => $('ticket').scrollIntoView({ behavior: 'smooth', block: 'start' }));
+try { new IntersectionObserver(es => es.forEach(en => $('dock').classList.toggle('away', en.isIntersecting)), { threshold: .35 }).observe($('ticket')); } catch(e){}
+$('paxMinus').addEventListener('click', () => { S.pax = Math.max(1, S.pax - 1); render(); });
+$('paxPlus').addEventListener('click', () => { S.pax = Math.min(200, S.pax + 1); render(); });
+$('pax').addEventListener('input', e => { const v = parseRp(e.target.value); if (v >= 1){ S.pax = Math.min(200, v); render(); } });
+$('pax').addEventListener('blur', () => { $('pax').value = S.pax; });
+$('detailBtn').addEventListener('click', () => { S.detail = !S.detail; render(); });
+$('fit').addEventListener('click', e => {
+  const b = e.target.closest('[data-fit]'); if (!b) return;
+  const id = b.dataset.fit, keepH = S.hargaPerPax, keepPax = S.pax;
+  applyProgram(id, true); S.hargaPerPax = keepH; S.pax = keepPax; S.hargaEdited = true;
+  if (id === 'tab'){ S.nabung = Number(b.dataset.fn); S.awal = S.fit.dp; S.lanjut = 'p3'; }
+  else { S.dp = Number(b.dataset.fdp); }
+  render(); toast(`${PROGRAMS[id].nama} dipakai`); window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+$('copyBtn').addEventListener('click', () => {
+  const txt = waText(lastC);
+  const fallback = () => { const box = $('copyBox'); box.hidden = false; box.value = txt; box.focus(); box.select(); toast('Teks dipilih, salin manual'); };
+  try { navigator.clipboard.writeText(txt).then(() => toast('Ringkasan disalin, tinggal tempel di WhatsApp'), fallback); } catch(e){ fallback(); }
+});
+$('showTextBtn').addEventListener('click', () => { const box = $('copyBox'); box.hidden = !box.hidden; $('showTextBtn').textContent = box.hidden ? 'Lihat teks' : 'Tutup teks'; });
+
+let rzT; window.addEventListener('resize', () => { clearTimeout(rzT); rzT = setTimeout(render, 150); });
+applyProgram('p1', false);
+render();
+</script>
+</body>
+</html>
