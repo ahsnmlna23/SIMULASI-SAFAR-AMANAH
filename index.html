@@ -398,7 +398,7 @@ textarea.copybox{width:100%; min-height:200px; border:1px solid var(--line); bor
         </div>
 
         <div class="field" id="lockField">
-          <div class="lbl"><span>Fee management</span><span class="hint">sesuai syarat program</span></div>
+          <div class="lbl"><span>Fee management</span><span class="hint">tetap 5% dari DP</span></div>
           <div class="locks" id="locks"></div>
         </div>
 
@@ -473,19 +473,19 @@ const PROGRAMS = {
         travel:[[0,.15],[2,.85]], berangkat:2, cicilanMulai:1,
         desc:'Untuk jamaah yang ingin segera berangkat. Seluruh cicilan berjalan setelah pulang.' },
   p2: { id:'p2', nama:'Berangkat 3 Bulan', pendek:'Program 2',
-        komite:true, harga:37e6, pax:1, dpMin:.40, dp:.40, margin:.14, tenor:24, fee:.10, feeMax:.10,
+        komite:true, harga:37e6, pax:1, dpMin:.40, dp:.40, margin:.14, tenor:24, fee:.05, feeMax:.10,
         travel:[[0,.15],[3,.85]], berangkat:3, cicilanMulai:1,
         desc:'Dua kali cicilan sebelum berangkat, sisanya setelah pulang.' },
   p3: { id:'p3', nama:'Berangkat 6 Bulan', pendek:'Program 3',
-        komite:true, harga:36e6, pax:1, dpMin:.25, dp:.25, margin:.12, tenor:24, fee:.10, feeMax:.10,
+        komite:true, harga:36e6, pax:1, dpMin:.25, dp:.25, margin:.12, tenor:24, fee:.05, feeMax:.10,
         travel:[[0,.15],[7,.85]], berangkat:7, cicilanMulai:1,
         desc:'DP paling ringan. Enam kali cicilan sebelum berangkat.' },
   b2b: { id:'b2b', nama:'B2B / Rombongan', pendek:'B2B',
-        komite:false, ikut:'p1', harga:40e6, pax:20, dpMin:.50, dp:.50, margin:.15, tenor:24, fee:0, feeMax:.05,
+        komite:false, ikut:'p1', harga:40e6, pax:20, dpMin:.50, dp:.50, margin:.15, tenor:24, fee:.05, feeMax:.05,
         travel:[[0,1]], berangkat:1, cicilanMulai:1,
         desc:'Paket instansi atau rombongan dalam satu akad. Travel dilunasi 100% di bulan akad. Mengikuti syarat Program 1.' },
   tab: { id:'tab', nama:'Tabungan Umrah', pendek:'Tabungan',
-        komite:false, harga:36e6, pax:1, dpMin:.25, dp:.25, margin:.12, tenor:24, fee:.10, feeMax:.10,
+        komite:false, harga:36e6, pax:1, dpMin:.25, dp:.25, margin:.12, tenor:24, fee:.05, feeMax:.10,
         nabung:6, lanjut:'p3',
         desc:'Nabung DP dulu secara rutin. Setelah DP terkumpul, akad dan mengikuti syarat program keberangkatan yang dipilih.' }
 };
@@ -600,7 +600,7 @@ function renderControls(c){
   if (document.activeElement !== $('dpRp')) $('dpRp').value = nf.format(Math.round(c.dp));
   $('dpMsg').hidden = !S.dpMsg; $('dpMsg').textContent = S.dpMsg;
   const LOCK = '<svg width="11" height="11" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 10V7a6 6 0 1112 0v3h1a1 1 0 011 1v10a1 1 0 01-1 1H5a1 1 0 01-1-1V11a1 1 0 011-1h1zm2 0h8V7a4 4 0 10-8 0v3z" fill="currentColor"/></svg>';
-  if ($('locks')) $('locks').innerHTML = `<div class="lock-item"><span class="k">${LOCK} ${pc(c.feePct, 1)} dari DP · maks. ${pc(c.feeMax)}</span><span class="v">${rp(c.fee)}</span><span class="s">diambil dari DP, tidak menambah pembayaran klien</span></div>`;
+  if ($('locks')) $('locks').innerHTML = `<div class="lock-item"><span class="k">${LOCK} ${pc(c.feePct, 1)} dari DP · berlaku semua program</span><span class="v">${rp(c.fee)}</span><span class="s">diambil dari DP, tidak menambah pembayaran klien</span></div>`;
   const ms = [12, 12.5, 13, 13.5, 14, 14.5, 15], std = c.S0.margin * 100;
   $('mSeg').innerHTML = ms.map(m => `<button type="button" data-m="${m}" aria-pressed="${Math.abs(c.margin * 100 - m) < 1e-6}" class="${Math.abs(std - m) < 1e-6 ? 'kom' : ''}">${m.toLocaleString('id-ID')}%</button>`).join('');
   $('mVal').innerHTML = `${pc(c.margin, 1)}<small>flat/thn</small>`;
