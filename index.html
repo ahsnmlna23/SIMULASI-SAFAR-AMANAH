@@ -308,6 +308,7 @@ textarea.copybox{width:100%; min-height:200px; border:1px solid var(--line); bor
   .panel{padding:16px}
   .row2{grid-template-columns:minmax(0,1fr) 112px}
   .opt-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .tk-stub > div:last-child:nth-child(odd){grid-column:span 2}
   .opt-row .act{justify-self:end; align-self:end}
 }
 @media (prefers-reduced-motion: reduce){ *{transition:none !important} }
@@ -383,11 +384,22 @@ textarea.copybox{width:100%; min-height:200px; border:1px solid var(--line); bor
         </div>
 
         <div class="field">
+          <div class="lbl"><span>Margin per tahun</span><span class="big-val" id="mVal"></span></div>
+          <div class="seg" id="mSeg" role="group" aria-label="Margin per tahun"></div>
+          <p class="note" id="mNote"></p>
+        </div>
+
+        <div class="field">
           <div class="lbl"><span>Tenor cicilan</span><span class="big-val" id="tVal"></span></div>
           <div class="range"><input type="range" id="tenor" min="3" max="24" step="1" aria-label="Tenor dalam bulan"></div>
           <div class="scale"><span>3 bln</span><span>24 bln</span></div>
           <div class="seg" id="tSeg" role="group" aria-label="Pilihan tenor cepat"></div>
           <p class="note" id="tNote"></p>
+        </div>
+
+        <div class="field" id="lockField">
+          <div class="lbl"><span>Fee management</span><span class="hint">sesuai syarat program</span></div>
+          <div class="locks" id="locks"></div>
         </div>
 
         <div class="field">
@@ -457,23 +469,23 @@ textarea.copybox{width:100%; min-height:200px; border:1px solid var(--line); bor
 <script>const BATAS = { dpMin: 0.25, dpMax: 0.90, marginMin: 0.12, marginMax: 0.15, tenorMin: 3, tenorMax: 24 };
 const PROGRAMS = {
   p1: { id:'p1', nama:'Berangkat ≤45 Hari', pendek:'Program 1',
-        komite:true, harga:37e6, pax:1, dpMin:.50, dp:.50, margin:.15, tenor:24,
+        komite:true, harga:37e6, pax:1, dpMin:.50, dp:.50, margin:.15, tenor:24, fee:.05, feeMax:.05,
         travel:[[0,.15],[2,.85]], berangkat:2, cicilanMulai:1,
         desc:'Untuk jamaah yang ingin segera berangkat. Seluruh cicilan berjalan setelah pulang.' },
   p2: { id:'p2', nama:'Berangkat 3 Bulan', pendek:'Program 2',
-        komite:true, harga:37e6, pax:1, dpMin:.40, dp:.40, margin:.14, tenor:24,
+        komite:true, harga:37e6, pax:1, dpMin:.40, dp:.40, margin:.14, tenor:24, fee:.10, feeMax:.10,
         travel:[[0,.15],[3,.85]], berangkat:3, cicilanMulai:1,
         desc:'Dua kali cicilan sebelum berangkat, sisanya setelah pulang.' },
   p3: { id:'p3', nama:'Berangkat 6 Bulan', pendek:'Program 3',
-        komite:true, harga:36e6, pax:1, dpMin:.25, dp:.25, margin:.12, tenor:24,
+        komite:true, harga:36e6, pax:1, dpMin:.25, dp:.25, margin:.12, tenor:24, fee:.10, feeMax:.10,
         travel:[[0,.15],[7,.85]], berangkat:7, cicilanMulai:1,
         desc:'DP paling ringan. Enam kali cicilan sebelum berangkat.' },
   b2b: { id:'b2b', nama:'B2B / Rombongan', pendek:'B2B',
-        komite:false, ikut:'p1', harga:40e6, pax:20, dpMin:.50, dp:.50, margin:.15, tenor:24,
+        komite:false, ikut:'p1', harga:40e6, pax:20, dpMin:.50, dp:.50, margin:.15, tenor:24, fee:0, feeMax:.05,
         travel:[[0,1]], berangkat:1, cicilanMulai:1,
         desc:'Paket instansi atau rombongan dalam satu akad. Travel dilunasi 100% di bulan akad. Mengikuti syarat Program 1.' },
   tab: { id:'tab', nama:'Tabungan Umrah', pendek:'Tabungan',
-        komite:false, harga:36e6, pax:1, dpMin:.25, dp:.25, margin:.12, tenor:24,
+        komite:false, harga:36e6, pax:1, dpMin:.25, dp:.25, margin:.12, tenor:24, fee:.10, feeMax:.10,
         nabung:6, lanjut:'p3',
         desc:'Nabung DP dulu secara rutin. Setelah DP terkumpul, akad dan mengikuti syarat program keberangkatan yang dipilih.' }
 };
@@ -488,7 +500,7 @@ function build(inp){
   const S0 = isTab ? T : P;                                         // sumber syarat
   const dpMinSyarat = Math.max(BATAS.dpMin, S0.dpMin);
   const dpPct = clamp(inp.dp, dpMinSyarat, BATAS.dpMax);           // DP tidak bisa di bawah syarat
-  const margin = clamp(S0.margin, BATAS.marginMin, BATAS.marginMax); // margin dikunci sesuai syarat
+  const margin = clamp(inp.margin != null ? inp.margin : S0.margin, BATAS.marginMin, BATAS.marginMax); // margin 12–15%/thn
   const tenor = clamp(Math.round(inp.tenor != null ? inp.tenor : S0.tenor), BATAS.tenorMin, BATAS.tenorMax); // tenor 3–24 bulan
   const dp = harga * dpPct;
   const pokok = harga - dp;
@@ -507,9 +519,12 @@ function build(inp){
   const cicilanAkhir = cicilanMulai + tenor - 1;
   const cicilanSebelum = Math.max(0, Math.min(tenor, berangkat - cicilanMulai + 1));
   const sisaSaatBerangkat = piutang - cicilan * cicilanSebelum;
-  return { P, T, S0, dpMinSyarat, pax, harga, dpPct, dp, pokok, margin, tenor, totalMargin, piutang, cicilan, totalBayar,
+  const feeMax = S0.feeMax;
+  const feePct = clamp(inp.fee != null ? inp.fee : S0.fee, 0, feeMax);
+  const fee = dp * feePct;
+  return { P, T, S0, dpMinSyarat, feeMax, pax, harga, dpPct, dp, pokok, margin, tenor, totalMargin, piutang, cicilan, totalBayar,
     isTab, nabung, awal, akad, setoran, travel, pelunasan, berangkat, cicilanMulai, cicilanAkhir, cicilanSebelum,
-    cicilanSesudah: tenor - cicilanSebelum, sisaSaatBerangkat };
+    cicilanSesudah: tenor - cicilanSebelum, sisaSaatBerangkat, feePct, fee };
 }
 const nf = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 });
 const rp = n => (n < -0.5 ? '−' : '') + 'Rp ' + nf.format(Math.abs(Math.round(n)));
@@ -556,8 +571,8 @@ const ICON = {
 function renderRail(){
   if ($('rail').children.length){ $('rail').querySelectorAll('[data-p]').forEach(b => b.setAttribute('aria-pressed', b.dataset.p === S.program)); return; }
   $('rail').innerHTML = Object.values(PROGRAMS).map(P => {
-    const d = P.id === 'b2b' ? `Rombongan · DP min. ${pc(P.dpMin)} · ${P.tenor} bln` : P.id === 'tab' ? 'Nabung DP, lalu ikut Program 1/2/3' :
-      `DP min. ${pc(P.dpMin)} · ${P.tenor} bln`;
+    const d = P.id === 'b2b' ? `Rombongan · DP min. ${pc(P.dpMin)} · margin ${pc(P.margin)}` : P.id === 'tab' ? 'Nabung DP, lalu ikut Program 1/2/3' :
+      `DP min. ${pc(P.dpMin)} · margin ${pc(P.margin)}`;
     return `<button class="prog" type="button" data-p="${P.id}" aria-pressed="${S.program === P.id}"><span class="pn">${P.nama}</span><span class="pd">${d}</span></button>`;
   }).join('');
 }
@@ -585,6 +600,12 @@ function renderControls(c){
   if (document.activeElement !== $('dpRp')) $('dpRp').value = nf.format(Math.round(c.dp));
   $('dpMsg').hidden = !S.dpMsg; $('dpMsg').textContent = S.dpMsg;
   const LOCK = '<svg width="11" height="11" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 10V7a6 6 0 1112 0v3h1a1 1 0 011 1v10a1 1 0 01-1 1H5a1 1 0 01-1-1V11a1 1 0 011-1h1zm2 0h8V7a4 4 0 10-8 0v3z" fill="currentColor"/></svg>';
+  if ($('locks')) $('locks').innerHTML = `<div class="lock-item"><span class="k">${LOCK} ${pc(c.feePct, 1)} dari DP · maks. ${pc(c.feeMax)}</span><span class="v">${rp(c.fee)}</span><span class="s">diambil dari DP, tidak menambah pembayaran klien</span></div>`;
+  const ms = [12, 12.5, 13, 13.5, 14, 14.5, 15], std = c.S0.margin * 100;
+  $('mSeg').innerHTML = ms.map(m => `<button type="button" data-m="${m}" aria-pressed="${Math.abs(c.margin * 100 - m) < 1e-6}" class="${Math.abs(std - m) < 1e-6 ? 'kom' : ''}">${m.toLocaleString('id-ID')}%</button>`).join('');
+  $('mVal').innerHTML = `${pc(c.margin, 1)}<small>flat/thn</small>`;
+  const mLo = build(inputOf({ margin: .12 })), mHi = build(inputOf({ margin: .15 }));
+  $('mNote').innerHTML = `Total margin <b>${rp(c.totalMargin)}</b>. Di tenor ${c.tenor} bulan cicilan berkisar ${rp(mLo.cicilan)} (12%) sampai ${rp(mHi.cicilan)} (15%). Titik oranye = margin standar ${c.isTab ? c.T.pendek : c.P.pendek} (${pc(c.S0.margin)}).`;
   setRange($('tenor'), c.tenor, 3, 24);
   $('tVal').innerHTML = `${c.tenor}<small>bulan</small>`;
   $('tSeg').innerHTML = [6, 12, 18, 24].map(t => `<button type="button" data-t="${t}" aria-pressed="${c.tenor === t}">${t} bln</button>`).join('');
@@ -604,11 +625,14 @@ function renderTicket(c){
   }
   $('tkTrio').innerHTML = `
     <div><span class="k">Uang muka</span><span class="v">${rp(c.dp)}</span><span class="s">${pc(c.dpPct)} dari harga${c.isTab ? ' · dari tabungan' : ''}</span></div>
-    <div><span class="k">Total pembayaran</span><span class="v">${rp(c.totalBayar)}</span><span class="s">sudah termasuk DP</span></div>
+    <div><span class="k">Margin</span><span class="v">${pc(c.margin, 1)}/thn</span><span class="s">flat, tetap sampai lunas</span></div>
     <div><span class="k">Estimasi berangkat</span><span class="v">${mlab(ym, c.berangkat)}</span><span class="s">bulan ke-${c.berangkat}${c.isTab ? ' dari mulai nabung' : ' setelah akad'}</span></div>`;
   $('tkStub').innerHTML = `
     <div><span class="k">Harga paket${c.pax > 1 ? ` (${c.pax} jamaah)` : ''}</span><span class="v">${rp(c.harga)}</span></div>
     <div><span class="k">Pokok dibiayai</span><span class="v">${rp(c.pokok)}</span></div>
+    <div><span class="k">Total margin (${pc(c.margin, 1)}/thn)</span><span class="v">${rp(c.totalMargin)}</span></div>
+    <div><span class="k">Total pembayaran</span><span class="v">${rp(c.totalBayar)}</span></div>
+    <div><span class="k">Fee management (${pc(c.feePct, 1)} DP)</span><span class="v">${rp(c.fee)}</span></div>
     <div><span class="k">Cicilan pertama</span><span class="v">${mlab(S.akad, c.cicilanMulai)}</span></div>
     <div><span class="k">Lunas</span><span class="v">${mlab(S.akad, c.cicilanAkhir)}</span></div>
     <div><span class="k">Cicilan sebelum / sesudah berangkat</span><span class="v">${c.cicilanSebelum} / ${c.cicilanSesudah} kali</span></div>
@@ -626,6 +650,7 @@ function waText(c){
   } else {
     L.push(`DP (${pc(c.dpPct)}): ${rp(c.dp)}, dibayar saat akad ${mlab(ym, 0)}`);
   }
+  L.push(`Margin: ${pc(c.margin, 1)} per tahun (flat)`);
   L.push(`*Cicilan: ${rp(c.cicilan)} × ${c.tenor} bulan* (${mlab(ym, c.cicilanMulai)} – ${mlab(ym, c.cicilanAkhir)})`);
   L.push(`Total pembayaran: ${rp(c.totalBayar)}`);
   L.push(`Estimasi berangkat: ${mlab(ym, c.berangkat, true)}`);
@@ -773,7 +798,7 @@ function render(){
   const c = build(inp); lastC = c;
   S.dp = c.dpPct; S.margin = c.margin; S.tenor = c.tenor;   // state ikut nilai yang lolos syarat
   $('fenceTxt').innerHTML = `<span><b>${c.P.pendek}${c.isTab ? ' → ' + c.T.pendek : c.P.ikut ? ' (ikut ' + PROGRAMS[c.P.ikut].pendek + ')' : ''}</b></span>
-    <span>DP <b>min. ${pc(c.dpMinSyarat)}</b></span><span>Tenor <b>3–24 bulan</b></span>`;
+    <span>DP <b>min. ${pc(c.dpMinSyarat)}</b></span><span>Margin <b>12–15%/thn</b> flat</span><span>Tenor <b>3–24 bulan</b></span>`;
   $('dock').innerHTML = c.isTab
     ? `<span><span class="k">Tabungan DP / bulan</span><span class="v">${rp(c.setoran)}</span></span><span class="r">lalu cicil ${rpS(c.cicilan)}/bln<span>Berangkat ${mlab(S.akad, c.berangkat)}</span></span>`
     : `<span><span class="k">Cicilan / bulan × ${c.tenor}</span><span class="v">${rp(c.cicilan)}</span></span><span class="r">DP ${pc(c.dpPct)} · ${rpS(c.dp)}<span>Berangkat ${mlab(S.akad, c.berangkat)}</span></span>`;
@@ -808,8 +833,9 @@ $('dp').addEventListener('input', e => { S.dp = Number(e.target.value) / 100; S.
 $('nabung').addEventListener('input', e => { S.nabung = Number(e.target.value); render(); });
 $('tenor').addEventListener('input', e => { S.tenor = Number(e.target.value); render(); });
 $('tSeg').addEventListener('click', e => { const b = e.target.closest('[data-t]'); if (!b) return; S.tenor = Number(b.dataset.t); render(); });
+$('mSeg').addEventListener('click', e => { const b = e.target.closest('[data-m]'); if (!b) return; S.margin = Number(b.dataset.m) / 100; render(); });
 $('cmpSeg').addEventListener('click', e => { const b = e.target.closest('[data-cm]'); if (!b) return; S.cmp = b.dataset.cm; render(); });
-$('lanjut').addEventListener('change', e => { S.lanjut = e.target.value; S.dp = PROGRAMS[S.lanjut].dpMin; S.dpMsg = ''; render(); });
+$('lanjut').addEventListener('change', e => { S.lanjut = e.target.value; S.dp = PROGRAMS[S.lanjut].dpMin; S.margin = PROGRAMS[S.lanjut].margin; S.dpMsg = ''; render(); });
 $('akad').addEventListener('change', e => { if (/^\d{4}-\d{2}$/.test(e.target.value)) { S.akad = e.target.value; render(); } });
 $('cmp').addEventListener('click', e => {
   const b = e.target.closest('[data-use]'); if (!b || b.getAttribute('aria-pressed') === 'true') return;
